@@ -161,7 +161,7 @@ function summarizeInput(input) {
         return String(input ?? '');
     const obj = input;
     // 常用工具的关键字段
-    return obj.command ?? obj.name ?? obj.path ?? JSON.stringify(input).slice(0, 80);
+    return String(obj.command ?? obj.name ?? obj.path ?? JSON.stringify(input)).slice(0, 80);
 }
 function truncate(s, max) {
     return s.length > max ? `${s.slice(0, max)}…` : s;

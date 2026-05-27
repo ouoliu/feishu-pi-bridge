@@ -167,7 +167,7 @@ function summarizeInput(input: unknown): string {
   if (!input || typeof input !== 'object') return String(input ?? '');
   const obj = input as Record<string, unknown>;
   // 常用工具的关键字段
-  return obj.command ?? obj.name ?? obj.path ?? JSON.stringify(input).slice(0, 80);
+  return String(obj.command ?? obj.name ?? obj.path ?? JSON.stringify(input)).slice(0, 80);
 }
 
 function truncate(s: string, max: number): string {

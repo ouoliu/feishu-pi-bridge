@@ -30,6 +30,14 @@ npm install -g github:ouoliu/feishu-pi-bridge
 
 ### 1. 创建应用
 
+**方式一（推荐）：扫码自动创建**
+首次启动时，终端会显示二维码，用飞书 App 扫码即可自动创建应用并配置凭据：
+
+```bash
+feishu-pi-bridge
+```
+
+**方式二：手动创建**
 在 [飞书开放平台](https://open.feishu.cn/app) 创建一个**企业自建应用**。
 
 ### 2. 开启机器人
