@@ -1,7 +1,7 @@
 {
   "name": "feishu-pi-bridge",
   "version": "1.0.0",
-  "description": "飞书 ↔ pi coding agent 桥接器。在飞书里和 AI 编程助手对话。",
+  "description": "把飞书 / Lark 消息和本地 pi coding agent 打通的轻量 bot，一条命令起服务，在飞书里和 AI 编程助手对话",
   "type": "module",
   "bin": {
     "feishu-pi-bridge": "bin/feishu-pi-bridge.mjs"
@@ -9,7 +9,9 @@
   "scripts": {
     "start": "node dist/cli.js",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.75.5",
@@ -30,5 +32,12 @@
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ]
 }
