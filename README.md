@@ -19,15 +19,11 @@
 ## 安装
 
 ```bash
-# 克隆项目
-git clone https://github.com/ouoliu/feishu-pi-bridge.git
-cd feishu-pi-bridge
+# 一条命令安装
+npm install -g github:ouoliu/feishu-pi-bridge
 
-# 安装依赖
-npm install
-
-# 编译
-npm run build
+# 或从 npm（后续开放）
+# npm install -g feishu-pi-bridge
 ```
 
 ## 配置飞书应用
@@ -126,7 +122,7 @@ mkdir -p ~/.feishu-pi-bridge
 然后启动：
 
 ```bash
-cd feishu-pi-bridge && npm start
+feishu-pi-bridge
 ```
 
 ### 首次启动效果
