@@ -121,7 +121,7 @@ function isMentionedInGroup(text) {
     return text.includes('@');
 }
 // ─── 消息处理 ────────────────────────────────────
-async function handleMessage(text, messageId, chatId) {
+async function handleMessageWithSender(text, messageId, chatId, senderId) {
     console.error(`\n📩 [${chatId.slice(-8)}] ${text.slice(0, 60)}`);
     await addReaction(messageId, 'MUSCLE');
     console.error('  💪 表情');
@@ -136,7 +136,7 @@ async function handleMessage(text, messageId, chatId) {
     console.error('  📇 卡片');
     const sessionEntry = sessions.get(chatId);
     const sessionFile = sessionEntry?.sessionFile;
-    const prompt = `<bridge_context>\nchat_id: ${chatId}\nchat_type: group\n</bridge_context>\n\n${text}`;
+    const prompt = `<bridge_context>\nchat_id: ${chatId}\nchat_type: group\nsender_id: ${senderId}\n</bridge_context>\n\n${text}`;
     // 记录运行前已有的图片文件，用于检测新生成的图片
     const beforeImages = new Set();
     try {
@@ -395,9 +395,11 @@ async function main() {
                     // 群聊：只回复 @bot 的消息
                     if (isGroup && !isMentionedInGroup(text))
                         continue;
+                    // 增加 sender 上下文
+                    const senderId = m.sender?.id ?? 'unknown';
                     if (await handleSlash(text, chatId))
                         continue;
-                    await handleMessage(text, m.message_id, chatId);
+                    await handleMessageWithSender(text, m.message_id, chatId, senderId);
                 }
             }
             catch { /* per-chat error */ }
