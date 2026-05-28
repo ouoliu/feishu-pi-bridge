@@ -27,14 +27,12 @@ export function renderCard(state) {
     else if (state.terminal === 'error' && state.errorMsg) {
         elements.push(noteMd(`⚠️ agent 失败：${state.errorMsg}`));
     }
-    if (state.terminal === 'running') {
-        if (state.footer)
-            elements.push(footerStatus(state.footer));
+    if (state.terminal === 'running' && state.footer === 'streaming') {
+        // 流式输出时，不加底部状态栏，保持界面干净
     }
     return {
         schema: '2.0',
         config: {
-            streaming_mode: false,
             summary: { content: summaryText(state) },
         },
         body: { elements },
