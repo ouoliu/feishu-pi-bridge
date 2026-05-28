@@ -110,6 +110,7 @@ async function handleMessage(text, messageId, chatId) {
     }));
     console.error('  📇 卡片');
     const sessionEntry = sessions.get(chatId);
+    const sessionFile = sessionEntry?.sessionFile;
     const prompt = `<bridge_context>\nchat_id: ${chatId}\nchat_type: group\n</bridge_context>\n\n${text}`;
     let state = initialState;
     let updateTimer = null;
@@ -129,10 +130,11 @@ async function handleMessage(text, messageId, chatId) {
         if (!updateTimer)
             updateTimer = setTimeout(flushCard, 300);
     };
-    currentRun = adapter.run({ prompt, cwd: cfg.cwd, sessionId: sessionEntry?.sessionId });
+    currentRun = adapter.run({ prompt, cwd: cfg.cwd, sessionId: sessionFile });
     try {
         for await (const evt of currentRun.events) {
             if (evt.type === 'system' && evt.sessionId) {
+                // 保存 session 文件路径（从 adapter 返回的 sessionId 其实是文件路径）
                 sessions.set(chatId, evt.sessionId, cfg.cwd);
                 await sessions.save();
                 continue;
@@ -197,7 +199,7 @@ async function handleSlash(text, chatId) {
     if (cmd === '/status') {
         const e = sessions.get(chatId);
         await sendCard(chatId, card('📊 状态', e
-            ? `Session: \`${e.sessionId.slice(0, 12)}…\`\n目录: \`${e.cwd}\``
+            ? `上次对话: \`${e.sessionFile.slice(-20)}\`\n目录: \`${e.cwd}\``
             : '暂无活跃会话'));
         return true;
     }
@@ -293,7 +295,7 @@ async function main() {
                 for (const m of reversed) {
                     if (m.sender.sender_type === 'app')
                         continue;
-                    const text = parseText(m.body);
+                    const text = parseText(m.body ?? {});
                     // 跳过系统消息（如「xxx 邀请 bot 进群」）
                     if (!text || text.startsWith('{') && text.includes('"template"'))
                         continue;

@@ -8,7 +8,8 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 interface SessionEntry {
-  sessionId: string;
+  /** pi session 文件路径，用于恢复对话记忆 */
+  sessionFile: string;
   cwd: string;
   createdAt: number;
   updatedAt: number;
@@ -46,11 +47,11 @@ export class SessionStore {
     return this.data[chatId];
   }
 
-  set(chatId: string, sessionId: string, cwd: string): void {
+  set(chatId: string, sessionFile: string, cwd: string): void {
     const now = Date.now();
     const existing = this.data[chatId];
     this.data[chatId] = {
-      sessionId,
+      sessionFile,
       cwd,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,

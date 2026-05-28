@@ -33,11 +33,11 @@ export class SessionStore {
     get(chatId) {
         return this.data[chatId];
     }
-    set(chatId, sessionId, cwd) {
+    set(chatId, sessionFile, cwd) {
         const now = Date.now();
         const existing = this.data[chatId];
         this.data[chatId] = {
-            sessionId,
+            sessionFile,
             cwd,
             createdAt: existing?.createdAt ?? now,
             updatedAt: now,

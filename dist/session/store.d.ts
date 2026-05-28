@@ -1,5 +1,6 @@
 interface SessionEntry {
-    sessionId: string;
+    /** pi session 文件路径，用于恢复对话记忆 */
+    sessionFile: string;
     cwd: string;
     createdAt: number;
     updatedAt: number;
@@ -14,7 +15,7 @@ export declare class SessionStore {
     load(): Promise<void>;
     save(): Promise<void>;
     get(chatId: string): SessionEntry | undefined;
-    set(chatId: string, sessionId: string, cwd: string): void;
+    set(chatId: string, sessionFile: string, cwd: string): void;
     delete(chatId: string): void;
     getAll(): SessionData;
 }

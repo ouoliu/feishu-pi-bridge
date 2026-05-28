@@ -123,12 +123,27 @@ export class PiAdapter implements AgentAdapter {
     let capturedSessionId: string | undefined;
 
     try {
-      // 1. 初始化 pi session
+      // 1. 初始化 pi session（使用持久化 session 文件保持对话记忆）
       const auth = AuthStorage.create();
       const reg = ModelRegistry.create(auth);
 
+      // 使用持久化 session 文件保持对话记忆
+      let sm: SessionManager;
+      if (opts.sessionId) {
+        // opts.sessionId 存的是 session 文件路径
+        try {
+          sm = SessionManager.open(opts.sessionId);
+          console.error(`  会话恢复: ${opts.sessionId.slice(-20)}`);
+        } catch {
+          // 文件不存在或无法打开，创建新的
+          sm = SessionManager.create(opts.cwd ?? process.cwd());
+        }
+      } else {
+        sm = SessionManager.create(opts.cwd ?? process.cwd());
+      }
+
       const result = await createAgentSession({
-        sessionManager: SessionManager.inMemory(),
+        sessionManager: sm,
         authStorage: auth,
         modelRegistry: reg,
         cwd: opts.cwd,
@@ -137,10 +152,13 @@ export class PiAdapter implements AgentAdapter {
 
       const session = result.session;
       ctx.setSession(session);
-      capturedSessionId = session.sessionId;
 
-      // 发出 system 事件（bridge 用它记录 sessionId）
-      yield { type: 'system', sessionId: session.sessionId };
+      // 获取 session 文件路径（用于后续恢复对话记忆）
+      const sessionFile = sm.getSessionFile();
+      capturedSessionId = sessionFile ?? session.sessionId;
+
+      // 发出 system 事件（bridge 用它记录 sessionFile 路径）
+      yield { type: 'system', sessionId: capturedSessionId };
 
       // 2. 创建事件队列，订阅 pi 事件
       const queue = new AsyncQueue<AgentEvent>();
@@ -204,7 +222,7 @@ export class PiAdapter implements AgentAdapter {
       // 5. 等待 prompt 完成
       await promptPromise;
 
-      // 6. 完成
+      // 6. 完成 — 发出 sessionFile 路径供上层保存
       if (!ctx.isAborted()) {
         yield { type: 'done', sessionId: capturedSessionId };
       }
