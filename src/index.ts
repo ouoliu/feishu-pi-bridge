@@ -260,6 +260,9 @@ async function main() {
 
         for (const m of reversed) {
           if (m.sender.sender_type === 'app') continue;
+          const text = parseText(m.body);
+          // 跳过系统消息（如「xxx 邀请 bot 进群」）
+          if (!text || text.startsWith('{') && text.includes('"template"')) continue;
 
           if (!seenLast) {
             if (m.message_id === chatLastMsg.get(chatId)) seenLast = true;
@@ -271,7 +274,6 @@ async function main() {
           }
 
           chatLastMsg.set(chatId, m.message_id);
-          const text = parseText(m.body);
           const isGroup = m.chat_type === 'group';
 
           // 群聊：只回复 @bot 的消息
