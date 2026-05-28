@@ -151,12 +151,15 @@ async function handleMessage(text: string, messageId: string, chatId: string): P
       el.push({ tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
       scheduleUpdate(JSON.stringify(rawCard));
     }
+    // 最终状态：先清除 pending 定时器，再发送完成卡片
     state = finalizeIfRunning(state);
-    const rawCard = renderCard(state) as Record<string, unknown>;
-    const el = (rawCard.body as { elements: unknown[] }).elements;
-    el.push({ tag: 'hr' });
-    el.push({ tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
-    await flushCard();
+    if (updateTimer) { clearTimeout(updateTimer); updateTimer = null; }
+    const finalCard = renderCard(state) as Record<string, unknown>;
+    (finalCard.body as { elements: unknown[] }).elements.push(
+      { tag: 'hr' },
+      { tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' }
+    );
+    if (cardId) await updateCard(cardId, JSON.stringify(finalCard));
     console.error('  ✅ 完成');
   } catch (err) {
     console.error(`  ❌ 错误:`, (err as Error).message);

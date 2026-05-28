@@ -146,12 +146,16 @@ async function handleMessage(text, messageId, chatId) {
             el.push({ tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
             scheduleUpdate(JSON.stringify(rawCard));
         }
+        // 最终状态：先清除 pending 定时器，再发送完成卡片
         state = finalizeIfRunning(state);
-        const rawCard = renderCard(state);
-        const el = rawCard.body.elements;
-        el.push({ tag: 'hr' });
-        el.push({ tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
-        await flushCard();
+        if (updateTimer) {
+            clearTimeout(updateTimer);
+            updateTimer = null;
+        }
+        const finalCard = renderCard(state);
+        finalCard.body.elements.push({ tag: 'hr' }, { tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
+        if (cardId)
+            await updateCard(cardId, JSON.stringify(finalCard));
         console.error('  ✅ 完成');
     }
     catch (err) {
