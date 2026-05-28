@@ -14,7 +14,13 @@ export function renderCard(state) {
             elements.push(...renderToolGroup(group.tools, state.terminal !== 'running'));
         }
     }
-    if (state.terminal === 'interrupted') {
+    if (state.terminal === 'done') {
+        // 完成后添加顶栏标记
+        elements.unshift(noteMd('✅ **已完成**'));
+        if (elements.length <= 1)
+            elements.push(noteMd('_（未返回内容）_'));
+    }
+    else if (state.terminal === 'interrupted') {
         elements.push(noteMd('_⏹ 已被中断_'));
     }
     else if (state.terminal === 'idle_timeout') {
@@ -23,9 +29,6 @@ export function renderCard(state) {
     else if (state.terminal === 'error' && state.errorMsg) {
         elements.push(noteMd(`⚠️ agent 失败：${state.errorMsg}`));
     }
-    else if (state.terminal === 'done' && elements.length === 0) {
-        elements.push(noteMd('_（未返回内容）_'));
-    }
     if (state.terminal === 'running') {
         if (state.footer)
             elements.push(footerStatus(state.footer));
@@ -33,7 +36,7 @@ export function renderCard(state) {
     return {
         schema: '2.0',
         config: {
-            streaming_mode: state.terminal === 'running',
+            streaming_mode: false,
             summary: { content: summaryText(state) },
         },
         body: { elements },
@@ -132,18 +135,18 @@ function footerStatus(status) {
 }
 function summaryText(state) {
     if (state.terminal === 'interrupted')
-        return '已中断';
+        return '⏹ 已中断';
     if (state.terminal === 'idle_timeout')
-        return '已超时';
+        return '⏱ 已超时';
     if (state.terminal === 'error')
-        return '出错';
+        return '❌ 出错';
     if (state.terminal === 'done')
-        return '已完成';
+        return '✅ 已完成';
     if (state.footer === 'tool_running')
-        return '正在调用工具';
+        return '🧰 正在调用工具';
     if (state.footer === 'streaming')
-        return '正在输出';
-    return '思考中';
+        return '✍️ 正在输出';
+    return '🧠 思考中';
 }
 function toolHeaderText(tool) {
     const icon = tool.status === 'error' ? '❌' : tool.status === 'running' ? '⏳' : '✅';

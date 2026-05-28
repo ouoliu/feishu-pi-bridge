@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1060" width="720" height="1060">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#444"/></marker>
+    <marker id="grn" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#166534"/></marker>
+    <marker id="red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b91c1c"/></marker>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/></filter>
+  </defs>
+  <rect width="720" height="1060" fill="#f8fafc" rx="12"/>
+
+  <!-- START -->
+  <ellipse cx="340" cy="50" rx="100" ry="28" fill="#fed7aa" stroke="#c2410c" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="56" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">用户打开应用</text>
+  <line x1="340" y1="78" x2="340" y2="118" stroke="#c2410c" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- DECISION 1: 已登录？ -->
+  <polygon points="340,125 430,180 340,235 250,180" fill="#fef3c7" stroke="#b45309" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="186" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">已登录？</text>
+
+  <!-- YES → 进入主页 -->
+  <line x1="432" y1="180" x2="520" y2="180" stroke="#166534" stroke-width="2" marker-end="url(#grn)"/>
+  <text x="476" y="172" text-anchor="middle" font-size="13" font-family="sans-serif" fill="#166534" font-weight="bold">是</text>
+  <rect x="522" y="152" width="130" height="56" rx="8" fill="#a7f3d0" stroke="#047857" stroke-width="2" filter="url(#sh)"/>
+  <text x="587" y="186" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">进入主页</text>
+
+  <!-- NO → 显示登录页 -->
+  <line x1="340" y1="237" x2="340" y2="280" stroke="#b45309" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="356" y="263" text-anchor="start" font-size="13" font-family="sans-serif" fill="#b45309" font-weight="bold">否</text>
+  <rect x="250" y="282" width="180" height="50" rx="8" fill="#dbeafe" stroke="#1e3a5f" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="312" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">显示登录页</text>
+
+  <line x1="340" y1="332" x2="340" y2="368" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 输入账号密码 -->
+  <rect x="250" y="370" width="180" height="50" rx="8" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="400" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#fff" font-weight="bold">输入账号密码</text>
+
+  <line x1="340" y1="420" x2="340" y2="456" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 调用登录 API -->
+  <rect x="250" y="458" width="180" height="50" rx="8" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="488" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#fff" font-weight="bold">调用登录 API</text>
+
+  <line x1="340" y1="508" x2="340" y2="550" stroke="#b45309" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- DECISION 2: 验证通过？ -->
+  <polygon points="340,557 430,612 340,667 250,612" fill="#fef3c7" stroke="#b45309" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="618" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">验证通过？</text>
+
+  <!-- YES → 保存Token+跳转 -->
+  <line x1="432" y1="612" x2="520" y2="612" stroke="#166534" stroke-width="2" marker-end="url(#grn)"/>
+  <text x="476" y="604" text-anchor="middle" font-size="13" font-family="sans-serif" fill="#166534" font-weight="bold">是</text>
+  <rect x="522" y="576" width="150" height="72" rx="8" fill="#a7f3d0" stroke="#047857" stroke-width="2" filter="url(#sh)"/>
+  <text x="597" y="602" text-anchor="middle" font-size="14" font-family="sans-serif" fill="#374151" font-weight="bold">保存 Token</text>
+  <text x="597" y="628" text-anchor="middle" font-size="13" font-family="sans-serif" fill="#64748b">跳转主页</text>
+
+  <!-- NO → 显示错误 -->
+  <line x1="340" y1="669" x2="340" y2="714" stroke="#b91c1c" stroke-width="2" marker-end="url(#red)"/>
+  <text x="356" y="696" text-anchor="start" font-size="13" font-family="sans-serif" fill="#b91c1c" font-weight="bold">否</text>
+  <rect x="250" y="716" width="180" height="50" rx="8" fill="#fecaca" stroke="#b91c1c" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="746" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">显示错误信息</text>
+
+  <line x1="340" y1="766" x2="340" y2="808" stroke="#b45309" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- DECISION 3: 是否重试？ -->
+  <polygon points="340,815 430,870 340,925 250,870" fill="#fef3c7" stroke="#b45309" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="876" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">是否重试？</text>
+
+  <!-- YES → 返回重试 -->
+  <path d="M248,870 L155,870 L155,395 L252,395" fill="none" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <text x="200" y="620" text-anchor="middle" font-size="13" font-family="sans-serif" fill="#1e3a5f" font-weight="bold">是（返回重试）</text>
+
+  <!-- NO → 忘记密码 -->
+  <line x1="340" y1="927" x2="340" y2="968" stroke="#b91c1c" stroke-width="2" marker-end="url(#red)"/>
+  <text x="356" y="952" text-anchor="start" font-size="13" font-family="sans-serif" fill="#b91c1c" font-weight="bold">否</text>
+  <rect x="240" y="970" width="200" height="56" rx="8" fill="#dbeafe" stroke="#1e3a5f" stroke-width="2" filter="url(#sh)"/>
+  <text x="340" y="1004" text-anchor="middle" font-size="15" font-family="sans-serif" fill="#374151" font-weight="bold">忘记密码 / 注册</text>
+</svg>
