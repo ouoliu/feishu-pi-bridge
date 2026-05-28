@@ -4,6 +4,13 @@ import { join, dirname } from 'node:path';
 import { registerApp } from '@larksuiteoapi/node-sdk';
 import qrcode from 'qrcode-terminal';
 
+export interface WhitelistConfig {
+  /** 允许对话的 chat_id 列表，为空表示不限制 */
+  chatIds: string[];
+  /** 允许对话的用户 open_id 列表，为空表示不限制 */
+  userIds: string[];
+}
+
 export interface BridgeConfig {
   appId: string;
   appSecret: string;
@@ -11,9 +18,32 @@ export interface BridgeConfig {
   cwd: string;
   model?: string;
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+  whitelist?: WhitelistConfig;
 }
 
 const CONFIG_FILE = join(homedir(), '.feishu-pi-bridge', 'config.json');
+
+/** 从环境变量解析白名单 */
+function parseWhitelistEnv(): WhitelistConfig | undefined {
+  const chatIds = process.env.FEISHU_WHITELIST_CHATS
+    ? process.env.FEISHU_WHITELIST_CHATS.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+  const userIds = process.env.FEISHU_WHITELIST_USERS
+    ? process.env.FEISHU_WHITELIST_USERS.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+  if (chatIds.length > 0 || userIds.length > 0) {
+    return { chatIds, userIds };
+  }
+  return undefined;
+}
+
+/** 合并白名单：env 为空时回退到文件配置 */
+function mergeWhitelist(parsed: BridgeConfig): BridgeConfig {
+  // 如果 env 已经提供了白名单，优先用 env
+  if (parsed.whitelist) return parsed;
+  // 否则保留文件里的 whitelist（如果有的话）
+  return parsed;
+}
 
 /**
  * Load config. If no config found, launch QR scan wizard.
@@ -29,6 +59,7 @@ export async function loadConfig(): Promise<BridgeConfig> {
       cwd: process.env.PI_CWD ?? homedir(),
       model: process.env.PI_MODEL,
       reasoningEffort: process.env.PI_REASONING_EFFORT as BridgeConfig['reasoningEffort'],
+      whitelist: parseWhitelistEnv(),
     };
   }
 

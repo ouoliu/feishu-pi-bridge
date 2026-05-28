@@ -73,6 +73,21 @@ function parseText(body) {
     catch { }
     return text;
 }
+/** 检查消息是否在白名单内 */
+function isAllowed(chatId, senderOpenId) {
+    const wl = cfg.whitelist;
+    if (!wl || (wl.chatIds.length === 0 && wl.userIds.length === 0)) {
+        return true; // 白名单未配置，全部放行
+    }
+    let allowed = true;
+    if (wl.chatIds.length > 0) {
+        allowed = wl.chatIds.includes(chatId);
+    }
+    if (wl.userIds.length > 0 && senderOpenId) {
+        allowed = allowed && wl.userIds.includes(senderOpenId);
+    }
+    return allowed;
+}
 /** 检查群聊消息是否 @了 bot */
 function isMentionedInGroup(text) {
     // 飞书 @ 格式: @_user_xxx 或 @_all
@@ -182,8 +197,23 @@ async function handleSlash(text, chatId) {
             : '暂无活跃会话'));
         return true;
     }
+    if (cmd === '/whitelist') {
+        const wl = cfg.whitelist;
+        if (!wl || (wl.chatIds.length === 0 && wl.userIds.length === 0)) {
+            await sendCard(chatId, card('📋 白名单状态', '🔓 **白名单未启用**\n当前所有聊天均可对话。'));
+        }
+        else {
+            const parts = [];
+            if (wl.chatIds.length > 0)
+                parts.push(`**允许的群聊/私聊 (${wl.chatIds.length}):**\n${wl.chatIds.map(id => `\`${id}\``).join('\n')}`);
+            if (wl.userIds.length > 0)
+                parts.push(`**允许的用户 (${wl.userIds.length}):**\n${wl.userIds.map(id => `\`${id}\``).join('\n')}`);
+            await sendCard(chatId, card('📋 白名单状态', parts.join('\n\n')));
+        }
+        return true;
+    }
     if (cmd === '/help') {
-        await sendCard(chatId, card('命令指南', '直接发消息回复\n`/new` 重置\n`/status` 状态\n`/help` 帮助'));
+        await sendCard(chatId, card('命令指南', '直接发消息回复\n`/new` 重置\n`/status` 状态\n`/whitelist` 查看白名单\n`/help` 帮助'));
         return true;
     }
     return false;
@@ -232,6 +262,18 @@ async function main() {
     console.log(`✅ ${adapter.displayName}`);
     await sessions.load();
     console.log(`✅ 会话已加载`);
+    // 白名单状态
+    const wl = cfg.whitelist;
+    if (wl && (wl.chatIds.length > 0 || wl.userIds.length > 0)) {
+        console.log(`🔒 白名单已启用:`);
+        if (wl.chatIds.length > 0)
+            console.log(`   允许的聊天: ${wl.chatIds.join(', ')}`);
+        if (wl.userIds.length > 0)
+            console.log(`   允许的用户: ${wl.userIds.join(', ')}`);
+    }
+    else {
+        console.log(`🔓 白名单未启用 (所有聊天均可对话)`);
+    }
     // 周期性轮询所有聊天
     const pollAll = async () => {
         const chats = await fetchChats();
@@ -262,6 +304,12 @@ async function main() {
                     }
                     chatLastMsg.set(chatId, m.message_id);
                     const isGroup = m.chat_type === 'group';
+                    const senderOpenId = m.sender?.id;
+                    // 白名单检查（含 sender 信息）
+                    if (!isAllowed(chatId, senderOpenId)) {
+                        console.error(`  🚫 白名单拦截: chat=${chatId.slice(-8)} sender=${senderOpenId?.slice(-8) ?? '?'}`);
+                        continue;
+                    }
                     // 群聊：只回复 @bot 的消息
                     if (isGroup && !isMentionedInGroup(text))
                         continue;
