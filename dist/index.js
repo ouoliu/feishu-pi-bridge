@@ -55,6 +55,31 @@ async function sendCard(chatId, cardJson) {
     }
     return d.data?.message_id ?? '';
 }
+/** 上传图片到飞书，返回 img_key */
+async function uploadImage(filePath) {
+    try {
+        const t = await getToken();
+        const { readFileSync } = await import('node:fs');
+        const blob = new Blob([readFileSync(filePath)]);
+        const form = new FormData();
+        form.append('image_type', 'message');
+        form.append('image', blob, 'image.png');
+        const r = await fetch('https://open.feishu.cn/open-apis/im/v1/images', {
+            method: 'POST', headers: { Authorization: `Bearer ${t}` },
+            body: form,
+        });
+        const d = await r.json();
+        if (d.code === 0 && d.data?.image_key) {
+            console.error(`  🖼️ 图片已上传: ${d.data.image_key.slice(0, 20)}…`);
+            return d.data.image_key;
+        }
+        console.error(`  ⚠️ 图片上传失败: code=${d.code}`);
+    }
+    catch (e) {
+        console.error(`  ⚠️ 图片上传错误:`, e.message);
+    }
+    return null;
+}
 async function updateCard(messageId, cardJson) {
     if (!messageId)
         return;
@@ -112,6 +137,18 @@ async function handleMessage(text, messageId, chatId) {
     const sessionEntry = sessions.get(chatId);
     const sessionFile = sessionEntry?.sessionFile;
     const prompt = `<bridge_context>\nchat_id: ${chatId}\nchat_type: group\n</bridge_context>\n\n${text}`;
+    // 记录运行前已有的图片文件，用于检测新生成的图片
+    const beforeImages = new Set();
+    try {
+        const { readdirSync } = await import('node:fs');
+        const { extname } = await import('node:path');
+        for (const f of readdirSync(cfg.cwd)) {
+            if (['.png', '.jpg', '.jpeg', '.gif', '.svg'].includes(extname(f).toLowerCase())) {
+                beforeImages.add(f);
+            }
+        }
+    }
+    catch { }
     let state = initialState;
     let updateTimer = null;
     let pendingJson = '';
@@ -155,10 +192,49 @@ async function handleMessage(text, messageId, chatId) {
             updateTimer = null;
         }
         const finalCard = renderCard(state);
-        finalCard.body.elements.push({ tag: 'hr' }, { tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
+        const elements = finalCard.body;
+        // 检测新生成的图片并上传到飞书
+        const newImages = [];
+        try {
+            const { readdirSync, statSync } = await import('node:fs');
+            const { extname, join } = await import('node:path');
+            for (const f of readdirSync(cfg.cwd)) {
+                if (!['.png', '.jpg', '.jpeg', '.gif', '.svg'].includes(extname(f).toLowerCase()))
+                    continue;
+                if (beforeImages.has(f))
+                    continue;
+                // 只处理 3 秒内的新文件
+                const age = Date.now() - statSync(join(cfg.cwd, f)).mtimeMs;
+                if (age < 60000)
+                    newImages.push(join(cfg.cwd, f));
+            }
+        }
+        catch { }
+        // 上传图片并单独发送图片消息
+        const imageKeys = [];
+        for (const imgPath of newImages.slice(0, 3)) { // 最多 3 张
+            const key = await uploadImage(imgPath);
+            if (key)
+                imageKeys.push(key);
+        }
+        // 卡片之后单独发图片消息（卡片不支持内嵌图片）
+        if (imageKeys.length > 0) {
+            console.error(`  🖼️ 发送 ${imageKeys.length} 张图...`);
+            const t = await getToken();
+            for (const imgKey of imageKeys) {
+                await fetch('https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id', {
+                    method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        receive_id: chatId, msg_type: 'image',
+                        content: JSON.stringify({ image_key: imgKey }),
+                    }),
+                }).catch(() => { });
+            }
+        }
+        elements.elements.push({ tag: 'hr' }, { tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
         if (cardId)
             await updateCard(cardId, JSON.stringify(finalCard));
-        console.error('  ✅ 完成');
+        console.error(`  ✅ 完成${newImages.length > 0 ? ` (${imageKeys.length} 张图)` : ''}`);
     }
     catch (err) {
         console.error(`  ❌ 错误:`, err.message);
