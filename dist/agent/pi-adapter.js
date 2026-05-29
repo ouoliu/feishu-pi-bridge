@@ -172,8 +172,23 @@ export class PiAdapter {
                     }
                 }
             });
-            // 3. 同时开始 prompt 和消费队列
-            const promptPromise = session.prompt(opts.prompt).catch((err) => {
+            // 3. 构建 prompt 选项（含图片）
+            let promptText = opts.prompt;
+            let promptImages;
+            if (opts.images && opts.images.length > 0) {
+                promptImages = [];
+                const { readFileSync } = await import('node:fs');
+                for (const imgPath of opts.images.slice(0, 3)) {
+                    try {
+                        const buf = readFileSync(imgPath);
+                        const ext = imgPath.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+                        const b64 = buf.toString('base64');
+                        promptImages.push({ type: 'image', source: { type: 'base64', mediaType: `image/${ext}`, data: b64 } });
+                    }
+                    catch { }
+                }
+            }
+            const promptPromise = session.prompt(promptText, { images: promptImages }).catch((err) => {
                 if (!ctx.isAborted()) {
                     queue.push({ type: 'error', message: err.message });
                 }

@@ -98,6 +98,35 @@ function parseText(body) {
     catch { }
     return text;
 }
+/** 从图片消息中提取 image_key */
+function parseImageKey(body) {
+    try {
+        return JSON.parse(body?.content ?? '').image_key ?? null;
+    }
+    catch {
+        return null;
+    }
+}
+/** 下载飞书图片到本地 */
+async function downloadImage(messageId, imageKey) {
+    try {
+        const t = await getToken();
+        const r = await fetch(`https://open.feishu.cn/open-apis/im/v1/messages/${messageId}/resources/${imageKey}?type=image`, { headers: { Authorization: `Bearer ${t}` } });
+        if (!r.ok)
+            return null;
+        const buf = Buffer.from(await r.arrayBuffer());
+        const { join } = await import('node:path');
+        const path = join('/tmp', `feishu-img-${Date.now()}.png`);
+        const { writeFileSync } = await import('node:fs');
+        writeFileSync(path, buf);
+        console.error(`  🖼️ 图片已下载: ${path} (${buf.length} bytes)`);
+        return path;
+    }
+    catch (e) {
+        console.error(`  ⚠️ 下载图片失败:`, e.message);
+        return null;
+    }
+}
 /** 检查消息是否在白名单内 */
 function isAllowed(chatId, senderOpenId) {
     const wl = cfg.whitelist;
@@ -121,8 +150,8 @@ function isMentionedInGroup(text) {
     return text.includes('@');
 }
 // ─── 消息处理 ────────────────────────────────────
-async function handleMessageWithSender(text, messageId, chatId, senderId) {
-    console.error(`\n📩 [${chatId.slice(-8)}] ${text.slice(0, 60)}`);
+async function handleMessageWithSender(text, messageId, chatId, senderId, imagePath) {
+    console.error(`\n📩 [${chatId.slice(-8)}] ${text.slice(0, 60)}${imagePath ? ' 🖼️' : ''}`);
     await addReaction(messageId, 'MUSCLE');
     console.error('  💪 表情');
     // 初始卡片
@@ -167,7 +196,7 @@ async function handleMessageWithSender(text, messageId, chatId, senderId) {
         if (!updateTimer)
             updateTimer = setTimeout(flushCard, 300);
     };
-    currentRun = adapter.run({ prompt, cwd: cfg.cwd, sessionId: sessionFile });
+    currentRun = adapter.run({ prompt, cwd: cfg.cwd, sessionId: sessionFile, images: imagePath ? [imagePath] : undefined });
     try {
         for await (const evt of currentRun.events) {
             if (evt.type === 'system' && evt.sessionId) {
@@ -399,11 +428,19 @@ async function main() {
                     // 群聊：只回复 @bot 的消息
                     if (isGroup && !isMentionedInGroup(text))
                         continue;
+                    // 检测图片消息
+                    const isImage = m.msg_type === 'image';
+                    let imagePath = null;
+                    if (isImage) {
+                        const imgKey = parseImageKey(m.body ?? {});
+                        if (imgKey)
+                            imagePath = await downloadImage(m.message_id, imgKey);
+                    }
                     // 增加 sender 上下文
                     const senderId = m.sender?.id ?? 'unknown';
                     if (await handleSlash(text, chatId))
                         continue;
-                    await handleMessageWithSender(text, m.message_id, chatId, senderId);
+                    await handleMessageWithSender(text, m.message_id, chatId, senderId, imagePath);
                 }
             }
             catch { /* per-chat error */ }
