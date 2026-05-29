@@ -232,8 +232,8 @@ async function handleMessageWithSender(text, messageId, chatId, senderId) {
             }
         }
         elements.elements.push({ tag: 'hr' }, { tag: 'markdown', content: '🤖 feishu-pi-bridge', text_size: 'notation' });
-        if (cardId)
-            await updateCard(cardId, JSON.stringify(finalCard));
+        // 发新消息代替更新旧卡片（PATCH 无法更新消息列表摘要）
+        await sendCard(chatId, JSON.stringify(finalCard));
         console.error(`  ✅ 完成${newImages.length > 0 ? ` (${imageKeys.length} 张图)` : ''}`);
     }
     catch (err) {
