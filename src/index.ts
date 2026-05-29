@@ -359,9 +359,14 @@ async function main() {
     console.log(`🔓 白名单未启用 (所有聊天均可对话)`);
   }
 
-  // 周期性轮询所有聊天
+  // 周期性轮询所有聊天（包含群聊 + session 中记录的私聊）
   const pollAll = async () => {
-    const chats = await fetchChats();
+    // 群聊：从 API 获取
+    const groupChats = await fetchChats();
+    // 私聊：从 session 记录中获取（im/v1/chats 不返回 p2p 聊天）
+    const savedChats = Object.keys(sessions.getAll());
+    const chats = [...new Set([...groupChats, ...savedChats])];
+    
     if (chats.length === 0) {
       console.error('⚠️ Bot 没有加入任何聊天。请把 bot 拉到群聊或私聊它。');
       return;

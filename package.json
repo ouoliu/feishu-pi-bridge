@@ -7,10 +7,9 @@
     "feishu-pi-bridge": "bin/feishu-pi-bridge.mjs"
   },
   "scripts": {
-    "start": "node dist/cli.js",
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "prepare": "npm run build",
+    "start": "node dist/index.js",
+    "build": "npx tsc",
+    "typecheck": "npx tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
